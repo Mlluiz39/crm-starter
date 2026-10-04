@@ -149,6 +149,11 @@ export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail
    if(t.reason==='acompanhamento'&&['qualificar','responder','acompanhar'].includes(b.kind))b={...b,kind:'acompanhar',templateId:'acompanhamento',terms:{}};
    if(['pausar','humano'].includes(b.kind)){t.status='concluida';c.status='pausada';c.error=b.kind==='humano'?'Hermes solicitou intervenção humana.':text(b.body||'Atendimento pausado.','motivo',1000);put('salesTasks',t);put('salesConversations',c);return {status:'pausada'};}
    const terms=b.terms??{};if(typeof terms!=='object'||!terms||Array.isArray(terms)||JSON.stringify(terms).length>5000)fail(400,'Termos inválidos.');
+   const sentTemplates=all('salesMessages').filter(m=>m.conversationId===c.id&&m.direction==='outbound'&&m.templateId).map(m=>m.templateId);
+   if(b.templateId&&sentTemplates.includes(b.templateId)&&['qualificar','responder'].includes(b.kind)){
+    if(['necessidade','detalhes'].includes(b.templateId))b={...b,templateId:'reuniao'};
+    else if(b.templateId==='reuniao')b={...b,templateId:'encaminhar'};
+   }
    const approval=requiresApproval({...b,terms});
    const latest=all('salesMessages').filter(m=>m.conversationId===c.id&&m.direction==='inbound').at(-1);
    const m=put('salesMessages',{id:randomUUID(),conversationId:c.id,channel:c.channel,recipient:c.recipient,direction:'outbound',kind:b.kind,templateId:approval?null:b.templateId,body:approval?text(b.body,'mensagem',8000,true):templateMessage(b.templateId,getLead(c.leadId),cfg),subject:approval?text(b.subject||'Proposta comercial','assunto',200,true):'Conversa com '+cfg.company,terms:approval?terms:{},conversationVersion:c.version,version:1,status:approval?'aguardando_aprovacao':'pendente',createdAt:now(),taskId:t.id,inReplyTo:latest?.threadId||null});

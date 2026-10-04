@@ -1,4 +1,6 @@
 data/
 .env
+.env.tokens
+.env.tools
 node_modules/
 *.log
