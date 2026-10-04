@@ -228,14 +228,19 @@ function integrationModal(id){
       <div id="hermes-connect-status">
         <p class="caption">Executando script de conexão no terminal (verificando instalação, perfil e gateway)...</p>
         <div class="typing-dots" style="margin: 16px 0;"><span></span><span></span><span></span></div>
+        <div class="form-actions" style="margin-top: 16px;">
+          ${btn('Fechar', 'close', '', 'quiet')}
+        </div>
       </div>`);
     const statusBox = $('#hermes-connect-status');
+    const bindClose = () => $('#modal').querySelectorAll('[data-action="close"]').forEach(b => b.onclick = () => $('#modal').close());
+    bindClose();
     (async () => {
       try {
         toast('Conectando ao Hermes via terminal...');
         const r = await api('/integrations/hermes/connect', 'POST', {});
         await load();
-        if(statusBox){
+        if(statusBox && $('#modal').open){
           statusBox.innerHTML = `
             <div class="row" style="margin-bottom: 12px;">
               <div class="icon-box green">${icon('check')}</div>
@@ -245,16 +250,18 @@ function integrationModal(id){
               </div>
             </div>
             <p class="caption">URL do Gateway: <strong class="mono">${esc(r.url || 'http://127.0.0.1:8642')}</strong></p>
-            <div class="form-actions" style="margin-top: 16px; justify-content: flex-start;">
+            <div class="form-actions" style="margin-top: 16px; justify-content: flex-start; gap: 10px;">
               ${btn('Reconectar / Testar novamente', 'hermes-reconnect', 'spark', 'primary')}
+              ${btn('Fechar', 'close', '', 'quiet')}
             </div>
           `;
           const rec = statusBox.querySelector('[data-action="hermes-reconnect"]');
           if(rec) rec.onclick = () => integrationModal('hermes');
+          bindClose();
         }
         toast('Hermes conectado com sucesso!');
       } catch(err) {
-        if(statusBox){
+        if(statusBox && $('#modal').open){
           statusBox.innerHTML = `
             <div class="row" style="margin-bottom: 12px;">
               <div class="icon-box red">${icon('alert')}</div>
@@ -263,12 +270,14 @@ function integrationModal(id){
                 <p class="error-text">${esc(err.message)}</p>
               </div>
             </div>
-            <div class="form-actions" style="margin-top: 16px; justify-content: flex-start;">
+            <div class="form-actions" style="margin-top: 16px; justify-content: flex-start; gap: 10px;">
               ${btn('Tentar novamente', 'hermes-reconnect', 'spark', 'primary')}
+              ${btn('Fechar', 'close', '', 'quiet')}
             </div>
           `;
           const rec = statusBox.querySelector('[data-action="hermes-reconnect"]');
           if(rec) rec.onclick = () => integrationModal('hermes');
+          bindClose();
         }
         toast('Erro ao conectar Hermes: ' + err.message);
       }
@@ -287,10 +296,11 @@ function integrationModal(id){
   modal(`<h2>${INFO[0]}</h2><p class="caption">${INFO[1]}</p>`
     +(tem?`<p class="caption">Chave atual: <strong class="mono">${esc(st.masked)}</strong>${st.updatedAt?' · atualizada em '+date(st.updatedAt):''}</p>`:'')
     +`<form id="int-form"><label class="field">${tem?'Nova chave':'Chave da API'}<input name="token" type="password" autocomplete="off" spellcheck="false" placeholder="${tem?esc(st.masked):'cole a chave aqui'}"></label>`
-    +`<div class="form-actions">${tem?btn('Remover chave','remove-integration','','',`data-id="${id}"`):''}<button class="primary">${tem?'Trocar chave':'Salvar chave'}</button></div></form>`
+    +`<div class="form-actions">${tem?btn('Remover chave','remove-integration','','',`data-id="${id}"`):''}${btn('Fechar','close','','quiet')}<button class="primary">${tem?'Trocar chave':'Salvar chave'}</button></div></form>`
     +`<div class="form-actions" style="justify-content:flex-start">${btn('Testar conexão','test-integration','','',`data-id="${id}"`)}</div>`
     +`<p class="caption" id="int-result"></p><p class="caption">${INFO[2]}</p>`);
   // O modal vive fora de #app: bind() não alcança seus [data-action].
+  $('#modal').querySelectorAll('[data-action="close"]').forEach(b=>b.onclick=()=>$('#modal').close());
   $('#int-form').onsubmit=async e=>{
     e.preventDefault();
     const sub=e.target.querySelector('button.primary'),v=(new FormData(e.target).get('token')||'').trim();
@@ -304,7 +314,18 @@ function integrationModal(id){
   const ts=$('#modal').querySelector('[data-action="test-integration"]');
   if(ts) ts.onclick=()=>action('test-integration',id);
 }
-function modal(html){$('#modal').innerHTML=btn('','close','close','quiet modal-close','aria-label="Fechar"')+html;$('#modal').showModal();$('#modal').querySelector('[data-action="close"]').onclick=()=>$('#modal').close();}
+function modal(html){
+  const m=$('#modal');
+  m.innerHTML=btn('','close','close','quiet modal-close','aria-label="Fechar"')+html;
+  if(!m.open) m.showModal();
+  m.querySelectorAll('[data-action="close"]').forEach(b=>b.onclick=()=>m.close());
+  m.onclick=(e)=>{
+    const r=m.getBoundingClientRect();
+    if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom){
+      m.close();
+    }
+  };
+}
 const field=(name,label,val='',type='text',required=false)=>`<label class="field">${label}<input name="${name}" type="${type}" value="${esc(val)}" ${required?'required':''}></label>`;
 function leadForm(l={}){modal(`<h2>${l.id?'Editar lead':'Novo lead'}</h2><form id="lead-form"><div class="fields">${field('name','Empresa',l.name,'text',true)}${field('contact','Nome do contato',l.contact)}${field('email','E-mail profissional',l.email,'email')}${field('phone','Telefone',l.phone)}${field('segment','Segmento',l.segment)}${field('city','Cidade / estado',l.city)}${field('website','Site',l.website,'url')}<label class="field">Tipo<select name="typeId"><option value="">Sem tipo</option>${data.types.filter(t=>t.active||t.id===l.typeId).map(t=>`<option value="${t.id}" ${t.id===l.typeId?'selected':''}>${esc(t.name)}</option>`).join('')}</select></label><label class="field full">Contexto / observações<textarea name="notes">${esc(l.notes)}</textarea></label><label class="row full"><input type="checkbox" name="blocked" ${l.blocked?'checked':''}>Não contatar este lead</label></div><div class="form-actions"><button class="primary">Salvar lead</button></div></form>`);$('#lead-form').onsubmit=e=>runForm(e,async b=>{b.blocked=e.target.elements.blocked.checked;await api('/leads'+(l.id?'/'+l.id:''),l.id?'PATCH':'POST',b);});}
 function leadDetail(id){const l=data.leads.find(l=>l.id===id),ds=data.decisions.filter(d=>d.leadId===id);modal(`<div class="details"><h2>${esc(l.name)}</h2>${l.blocked?'<span class="badge red">Não contatar</span>':badge(l.stage)}<dl><dt>Contato</dt><dd>${esc(l.contact||'—')}</dd><dt>E-mail</dt><dd>${esc(l.email||'—')}</dd><dt>Telefone</dt><dd>${esc(l.phone||'—')}</dd><dt>Localização</dt><dd>${esc(l.city||'—')}</dd><dt>Site</dt><dd>${l.website?`<a href="${esc(l.website)}" target="_blank" rel="noopener noreferrer">${esc(l.website)}</a>`:'Não informado'}</dd><dt>Origem</dt><dd>${esc(l.origin)}</dd></dl><div class="message">${esc(l.notes||'Sem observações.')}</div>${l.sources?.length?`<h3 class="metric-row">Fontes</h3>${l.sources.map(s=>`<p class="source"><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.url)}</a></p>`).join('')}`:''}${ds.length?`<h3 class="metric-row">Avaliações recebidas do worker</h3>${ds.map(d=>`<p><strong>${esc(d.question)}</strong><br>${esc(d.answer)}<br><small class="muted">${esc(d.model)} · ${date(d.createdAt)}</small></p>`).join('')}`:''}<div class="form-actions">${btn('Editar lead','modal-edit','edit','primary')}${btn('Excluir lead','delete-lead','trash','danger',`data-id="${l.id}"`)}</div></div>`);$('[data-action="modal-edit"]').onclick=()=>leadForm(l);const del=$('[data-action="delete-lead"]');if(del)del.onclick=()=>{modal(`<h2>Excluir lead</h2><p>Tem certeza que deseja excluir <strong>${esc(l.name)}</strong>?</p><p class="caption">Esta ação remove o lead e todas as suas decisões. Não pode ser desfeita.</p><div class="form-actions"><button class="danger" id="confirm-delete">Sim, excluir</button><button id="cancel-delete">Cancelar</button></div>`);$('#cancel-delete').onclick=()=>$('#modal').close();$('#confirm-delete').onclick=async()=>{try{await api('/leads/'+l.id,'DELETE');$('#modal').close();await load();toast('Lead excluído.');}catch(e){toast(e.message);}};};}
@@ -320,10 +341,10 @@ const submit=$('[data-action="submit-campaign"]');if(submit)submit.onclick=async
 function typeForm(t){modal(`<h2>${t?'Editar tipo':'Novo tipo de lead'}</h2><form id="type-form"><div class="stack">${field('name','Nome',t?.name,'text',true)}${field('description','Descrição',t?.description)}</div><div class="form-actions"><button class="primary">Salvar tipo</button></div></form>`);$('#type-form').onsubmit=e=>runForm(e,b=>api('/types'+(t?'/'+t.id:''),t?'PATCH':'POST',b));}
 async function runForm(e,fn){e.preventDefault();const submit=e.target.querySelector('button[type="submit"],button.primary');if(submit)submit.disabled=true;try{await fn(Object.fromEntries(new FormData(e.target)));$('#modal').close();await load();toast('Salvo com sucesso.');}catch(err){toast(err.message);}finally{if(submit)submit.disabled=false;}}
 function exportLeads(){const safe=v=>{let s=String(v??'');if(/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};const rows=[['Empresa','Contato','Email','Telefone','Cidade','Segmento','Etapa','Não contatar'],...listLeads(page==='clients').map(l=>[l.name,l.contact,l.email,l.phone,l.city,l.segment,names[l.stage],l.blocked?'Sim':'Não'])];const a=document.createElement('a'),u=URL.createObjectURL(new Blob(['\uFEFF'+rows.map(r=>r.map(safe).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}));a.href=u;a.download='leads-mlluiz.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);}
-function bind(){document.querySelectorAll('[data-page]').forEach(el=>el.onclick=()=>{page=el.dataset.page;menu=false;filter='';render();});document.querySelectorAll('[data-action]').forEach(el=>{if(!el.closest('#campaign-list'))el.onclick=()=>action(el.dataset.action,el.dataset.id);});document.querySelectorAll('[data-period]').forEach(el=>el.onclick=()=>{period=el.dataset.period;render();});document.querySelectorAll('[data-move]').forEach(el=>el.onchange=async()=>{try{await api('/leads/'+el.dataset.move,'PATCH',{stage:el.value});await load();toast('Etapa atualizada.');}catch(e){toast(e.message);await load();}});document.querySelectorAll('[data-chip]').forEach(el=>el.onclick=()=>$('#prospect-form').elements[el.dataset.chip].value=el.dataset.value);$('#global-search').oninput=e=>{filter=e.target.value;if(!['leads','clients','pipeline'].includes(page))page='leads';const start=e.target.selectionStart;render();$('#global-search').focus();$('#global-search').setSelectionRange(start,start);};document.querySelectorAll('.lead-card[draggable]').forEach(card=>{card.addEventListener('dragstart',e=>{dragId=card.dataset.id;e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');});card.addEventListener('dragend',()=>{card.classList.remove('dragging');dragId=null;document.querySelectorAll('.lane.drag-over').forEach(l=>l.classList.remove('drag-over'));});});
+function bind(){document.querySelectorAll('[data-page]').forEach(el=>el.onclick=()=>{page=el.dataset.page;menu=false;filter='';render();});$('#app').querySelectorAll('[data-action]').forEach(el=>{if(!el.closest('#campaign-list'))el.onclick=()=>action(el.dataset.action,el.dataset.id);});document.querySelectorAll('[data-period]').forEach(el=>el.onclick=()=>{period=el.dataset.period;render();});document.querySelectorAll('[data-move]').forEach(el=>el.onchange=async()=>{try{await api('/leads/'+el.dataset.move,'PATCH',{stage:el.value});await load();toast('Etapa atualizada.');}catch(e){toast(e.message);await load();}});document.querySelectorAll('[data-chip]').forEach(el=>el.onclick=()=>$('#prospect-form').elements[el.dataset.chip].value=el.dataset.value);$('#global-search').oninput=e=>{filter=e.target.value;if(!['leads','clients','pipeline'].includes(page))page='leads';const start=e.target.selectionStart;render();$('#global-search').focus();$('#global-search').setSelectionRange(start,start);};document.querySelectorAll('.lead-card[draggable]').forEach(card=>{card.addEventListener('dragstart',e=>{dragId=card.dataset.id;e.dataTransfer.setData('text/plain',dragId);e.dataTransfer.effectAllowed='move';card.classList.add('dragging');});card.addEventListener('dragend',()=>{card.classList.remove('dragging');dragId=null;document.querySelectorAll('.lane.drag-over').forEach(l=>l.classList.remove('drag-over'));});});
 document.querySelectorAll('.lane').forEach(lane=>{lane.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';lane.classList.add('drag-over');});lane.addEventListener('dragleave',e=>{if(!lane.contains(e.relatedTarget))lane.classList.remove('drag-over');});lane.addEventListener('drop',async e=>{e.preventDefault();lane.classList.remove('drag-over');const id=e.dataTransfer.getData('text/plain')||dragId;if(!id)return;const stage=lane.dataset.stage,lead=data.leads.find(l=>l.id===id);if(!lead||lead.stage===stage)return;try{await api('/leads/'+id,'PATCH',{stage});await load();toast('Lead movido para '+names[stage]+'.');}catch(err){toast(err.message);await load();}});});
 if($('#campaign-filter'))$('#campaign-filter').onchange=e=>$('#campaign-list').innerHTML=campaignTable(data.campaigns.filter(c=>!e.target.value||c.status===e.target.value));if($('#campaign-list'))$('#campaign-list').onclick=e=>{const b=e.target.closest('[data-action]');if(b){e.stopPropagation();action(b.dataset.action,b.dataset.id);}};if($('#prospect-form'))$('#prospect-form').onsubmit=e=>runForm(e,async b=>{const budget=Number(b.budget);if(!(budget>0)&&!confirm('Teto de custo zero: a busca real usa a AISA e é cobrada, então o worker vai recusar a tarefa.\n\nCriar mesmo assim?'))return;await api('/prospecting/jobs','POST',{...b,limit:Number(b.limit),budget});});}
-async function action(a,id){try{if(a.startsWith('sales-'))return await salesAction(a,id);if(a==='menu'){menu=!menu;render();}if(a==='logout'){clearTimeout(refreshTimer);try{await fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token}});}catch(e){}token='';sessionStorage.removeItem('crm_token');data=null;login();}
+async function action(a,id){try{if(a==='close'||a==='modal-close'){$('#modal').close();return;}if(a.startsWith('sales-'))return await salesAction(a,id);if(a==='menu'){menu=!menu;render();}if(a==='logout'){clearTimeout(refreshTimer);try{await fetch('/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token}});}catch(e){}token='';sessionStorage.removeItem('crm_token');data=null;login();}
 if(a==='profile'){modal('<h2>Meu perfil</h2><div class="profile-meta"><p><strong>Administrador:</strong> Marcelo Luiz</p><p><small>admin@mlluizdevtech.com.br</small></p></div><form id="change-pass-form"><h3>Alterar senha</h3><div class="login-fields"><label class="field"><span>Senha atual</span><input name="currentPassword" type="password" required autocomplete="current-password"></label><label class="field"><span>Nova senha (mínimo 6 caracteres)</span><input name="newPassword" type="password" required minlength="6" autocomplete="new-password"></label></div><div class="form-actions"><button class="primary">Atualizar senha</button></div><p class="error" id="change-pass-error"></p></form>');$('#change-pass-form').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);try{const r=await api('/auth/change-password','POST',{currentPassword:fd.get('currentPassword'),newPassword:fd.get('newPassword')});$('#modal').close();toast(r.message||'Senha atualizada com sucesso!');}catch(err){$('#change-pass-error').textContent=err.message;}};return;}if(a==='reload')await load();if(a==='pipeline'){page='pipeline';render();}if(a==='export')exportLeads();if(a==='new-lead')leadForm();if(a==='lead-detail')leadDetail(id);if(a==='new-campaign')campaignForm();if(a==='edit-campaign')campaignForm(data.campaigns.find(c=>c.id===id));if(a==='new-type')typeForm();if(a==='edit-type')typeForm(data.types.find(t=>t.id===id));if(a==='clean-jobs'){const ps=data.prospecting||{};if(!confirm('Remover '+ps.finished+' pesquisa(s) concluída(s)/com falha da lista?\n\nOs leads já importados permanecem no CRM.'))return;const r=await api('/prospecting/jobs/clean','POST',{status:'finished'});await load();toast(r.removed+' pesquisa(s) removida(s).');}
 if(a==='activate-apify'){await api('/prospecting/jobs/'+id+'/activate-apify','POST',{});await load();toast('Apify ativada. A pesquisa será executada pelo worker com o saldo restante.');return;}
 if(a==='remove-job'){if(!confirm('Remover esta pesquisa da lista? Os leads importados permanecem no CRM.'))return;await api('/prospecting/jobs/'+id,'DELETE');await load();toast('Pesquisa removida.');}
