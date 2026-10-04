@@ -15,7 +15,7 @@ if config_file.exists():
     if current.get('platform_toolsets', {}).get('api_server') != ['no_mcp']:
         raise SystemExit('Existing profile has tools enabled; not overwritten.')
 else:
-    original = yaml.safe_load((source / 'config.yaml').read_text()) or {}
+    original = (yaml.safe_load((source / 'config.yaml').read_text()) or {}) if (source / 'config.yaml').exists() else {}
     config = {
         'model': original.get('model', {}),
         'platform_toolsets': {'api_server': ['no_mcp']},
