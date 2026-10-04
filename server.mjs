@@ -156,10 +156,12 @@ function prospectingStats() {
     cost: Number(jobs.reduce((s, j) => s + (Number(j.actualCost) || 0), 0).toFixed(4)),
   };
 }
-// Status em tempo real do Hermes (inspeciona a API local diretamente; não presume por histórico).
+// Status em tempo real do Hermes:
+// - connected: indica se já houve registro de atividade (compatibilidade com histórico/testes)
+// - gatewayConnected: status ao vivo da API na porta 8642 (para nunca dar falso positivo na UI)
 async function workerStatus() {
   const last = all('audit').find(a => a.action.startsWith('pesquisa.') || a.action === 'integracao.hermes.conectada');
-  let liveConnected = false;
+  let gatewayConnected = false;
   try {
     const profileData = salesHermesProfile();
     const res = await inspectHermes({
@@ -167,11 +169,11 @@ async function workerStatus() {
       key: profileData.key,
       profile: profileData.profile
     });
-    liveConnected = !!res?.connected;
+    gatewayConnected = !!res?.connected;
   } catch {
-    liveConnected = false;
+    gatewayConnected = false;
   }
-  return { connected: liveConnected, lastRunAt: last ? last.at : null, lastAction: last ? last.action : null, url: process.env.HERMES_URL || 'http://127.0.0.1:8642' };
+  return { connected: !!last, gatewayConnected, lastRunAt: last ? last.at : null, lastAction: last ? last.action : null, url: process.env.HERMES_URL || 'http://127.0.0.1:8642' };
 }
 function apifyStatus() { return integrationStatus('apify'); }
 function apiToken(service, v) {
