@@ -1,7 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {createSalesStore} from './sales-store.mjs';
 import {DEFAULT_SALES,salesError as fail,salesText as text,validateSalesSettings,salesRecipient,requiresApproval,templateMessage,withinSalesHours,salesDay} from './sales-policy.mjs';
-export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail,sendWhatsapp,emailQuota,checkConnection}){
+export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail,sendWhatsapp,presenceWhatsapp,emailQuota,checkConnection}){
  const store=createSalesStore(db),{all,get,put,transaction}=store;
  const now=()=>new Date().toISOString();
  const settings=()=>({...DEFAULT_SALES,...get('settings','sales')});
@@ -16,7 +16,7 @@ export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail
  };
  const enqueue=(c,reason)=>put('salesTasks',{id:randomUUID(),conversationId:c.id,conversationVersion:c.version,status:'pendente',reason,createdAt:now()});
  const lease=(id,b)=>{const t=required('salesTasks',id);if(t.status!=='executando'||t.leaseToken!==b.leaseToken||Date.parse(t.leaseUntil)<=Date.now())fail(409,'Reserva comercial inválida ou expirada.');return t;};
- const state=()=>({settings:settings(),conversations:all('salesConversations').filter(c=>!c.deletedAt),deletedConversations:all('salesConversations').filter(c=>c.deletedAt),messages:all('salesMessages'),decisions:all('salesDecisions'),tasks:all('salesTasks').map(({leaseToken,...t})=>t),approvals:all('salesMessages').filter(m=>m.status==='aguardando_aprovacao'),costs:all('salesCosts'),worker:get('settings','salesWorker')||null,connection:get('settings','salesConnection')||null});
+ const state=()=>({settings:settings(),conversations:all('salesConversations').filter(c=>!c.deletedAt).map(c=>({...c,typing:all('salesTasks').some(t=>t.conversationId===c.id&&t.status==='executando')})),deletedConversations:all('salesConversations').filter(c=>c.deletedAt),messages:all('salesMessages'),decisions:all('salesDecisions'),tasks:all('salesTasks').map(({leaseToken,...t})=>t),approvals:all('salesMessages').filter(m=>m.status==='aguardando_aprovacao'),costs:all('salesCosts'),worker:get('settings','salesWorker')||null,connection:get('settings','salesConnection')||null});
  async function dispatch(method,p,b,role){
   if(method==='POST'&&p==='/api/sales/health'){admin(role);const v=checkConnection?await checkConnection(settings()):{error:'Verificação de conexão indisponível.'};put('settings',{...v,id:'salesConnection',at:now()});return v;}
   if(method==='POST'&&p==='/api/agent/sales/heartbeat'){agent(role);if(!['ativo','pausado','erro'].includes(b.status))fail(400,'Estado inválido.');return put('settings',{id:'salesWorker',status:b.status,error:text(b.error||'','erro',500),at:now()});}

@@ -16,6 +16,7 @@ export function createWacliClient({binary='wacli',account='crm-vendas',store='',
  }
  return {
   async send({recipient,body}){if(!/^\+[1-9]\d{9,14}$/.test(recipient)||typeof body!=='string'||!body.trim()||body.length>8000)throw failure('failed','Destinatário ou mensagem inválidos.');return parseSendResult(await run(['send','text','--to',recipient,'--message',body,'--no-preview']));},
+  async presence({recipient,typing=true}){if(!/^\+[1-9]\d{9,14}$/.test(recipient))return false;try{await run(['presence',typing?'typing':'paused','--to',recipient],{timeout:5000});return true;}catch{return false;}},
   async health(){
    try{
     const version=await new Promise(resolve=>execFileImpl(binary,['--version'],{shell:false,timeout:3000,maxBuffer:1024,encoding:'utf8'},(e,out)=>resolve(e?'':out.trim())));

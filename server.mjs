@@ -66,6 +66,7 @@ const salesApi=createSalesApi({db: supabaseStore?.isReady() ? supabaseStore : db
  emailQuota:()=>Number(emailSettings().dailyLimit)-enviadosHoje()-reservados(),
  sendEmail:m=>createSalesEmailClient({key:envValue(hermesEnvFile,'RESEND_API_KEY'),baseUrl:RESEND_BASE}).send(m),
  sendWhatsapp:async m=>{const cli=createWacliClient({binary:m.settings.wacliBinary,account:m.settings.wacliAccount,store:m.settings.wacliStore});const h=await cli.health();if(!h.authenticated||h.version!=='wacli 0.20.0')throw Object.assign(Error('Configure e autentique o wacli 0.20.0.'),{outcome:'failed',safeMessage:'Configure e autentique o wacli 0.20.0.'});m.beforeDispatch();return cli.send(m);},
+ presenceWhatsapp:async({recipient,typing,settings})=>{try{const cfg=settings||get('settings','sales')||{};const cli=createWacliClient({binary:cfg.wacliBinary,account:cfg.wacliAccount,store:cfg.wacliStore});return await cli.presence({recipient,typing});}catch{return false;}},
  checkConnection:async cfg=>{
   const whatsapp=await createWacliClient({binary:cfg.wacliBinary,account:cfg.wacliAccount,store:cfg.wacliStore}).health();
   let hermes;try{hermes=await inspectHermes({...salesHermesProfile(),url:cfg.hermesUrl});}catch(e){hermes={connected:false,error:e.message};}
