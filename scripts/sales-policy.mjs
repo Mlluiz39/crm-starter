@@ -38,6 +38,9 @@ export const SALES_TEMPLATES={
  necessidade:'Qual é a principal dificuldade de vocês hoje e o que gostariam de melhorar primeiro?',
  detalhes:'Entendi. Pode me contar um pouco mais sobre essa necessidade e como vocês trabalham hoje?',
  reuniao:'Podemos conversar para entender o cenário e avaliar a melhor solução para vocês? Qual horário seria conveniente?',
+ horario:'Perfeito! Qual horário seria mais conveniente para você: pela manhã ou no período da tarde?',
+ confirmar:'Combinado! Já anotei aqui. Vou preparar as informações para nossa conversa.',
+ duvida:'Desenvolvemos sites institucionais, landing pages e automações de atendimento para empresas. Qual dessas frentes vocês querem estruturar primeiro?',
  acompanhamento:'Olá! Retomando nossa conversa sobre a {lead}: ainda faz sentido conversarmos sobre as melhorias que vocês procuram?',
  encaminhar:'Obrigado por compartilhar. Vou preparar os detalhes para revisão e retorno com as condições aprovadas.'
 };
