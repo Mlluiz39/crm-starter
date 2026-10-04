@@ -75,7 +75,11 @@ export function ensureSalesProfile({ log = console.log } = {}) {
 export async function restartGateway({ hermesBin, home, log = console.log } = {}) {
   const pidFile = path.join(home, 'gateway.pid');
 
-  // Verifica se a porta 8642 está ocupada
+  try {
+    execSync(`HERMES_HOME="${home}" "${hermesBin}" gateway stop 2>/dev/null || true`, { stdio: 'ignore' });
+  } catch {}
+
+  // Verifica e libera a porta 8642 se estiver ocupada
   try {
     const fuser = execSync('fuser 8642/tcp 2>/dev/null', { encoding: 'utf8' }).trim();
     if (fuser) {
@@ -85,20 +89,19 @@ export async function restartGateway({ hermesBin, home, log = console.log } = {}
     }
   } catch {}
 
-  if (existsSync(pidFile)) {
-    try {
-      const pid = parseInt(readFileSync(pidFile, 'utf8').trim(), 10);
-      if (!Number.isNaN(pid)) {
-        try { process.kill(pid, 0); process.kill(pid, 'SIGTERM'); } catch {}
-      }
-    } catch {}
+  // Limpa arquivos de lock antigos que possam bloquear a inicialização
+  for (const f of ['gateway.lock', 'gateway.sock', 'gateway.pid']) {
+    const fp = path.join(home, f);
+    if (existsSync(fp)) {
+      try { rmSync(fp, { force: true }); } catch {}
+    }
   }
 
   const logPath = path.join(home, 'gateway-output.log');
   const outLog = openSync(logPath, 'a');
 
-  log?.(`Iniciando Hermes Gateway em segundo plano...`);
-  const child = spawn(hermesBin, ['gateway', 'run'], {
+  log?.(`Iniciando Hermes Gateway (--replace) em segundo plano...`);
+  const child = spawn(hermesBin, ['gateway', 'run', '--replace'], {
     env: {
       ...process.env,
       HERMES_HOME: home,
