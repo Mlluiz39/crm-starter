@@ -49,8 +49,8 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
    const s=await api('GET','/api/agent/sales/state');
    if(s.settings.enabled||s.conversations.some(c=>c.control==='human'&&!['ganho','perdido'].includes(c.status)))await recoverSalesInbound({api,state:s});
    const result=await runSalesCycle({api,decide:decideSale,draft:c=>{const p=salesHermesProfile();return draftSale(c,{...p,url:c.settings.hermesUrl});},prepare:async(state)=>{if(!loadKey('TYPESAFE_API_KEY'))throw Error('Configure Jev/TypeSafe em Integrações.');const p=salesHermesProfile();await inspectHermes({...p,url:state.settings.hermesUrl});}});
-   await api('POST','/api/agent/sales/heartbeat',{status:result.error?'erro':result.paused?'pausado':'ativo',error:result.error||''});console.log('Ciclo comercial:',result.error?'erro (consulte painel)':result.paused?'pausado':'concluído');
-  }catch(e){try{await api('POST','/api/agent/sales/heartbeat',{status:'erro',error:String(e.message).slice(0,500)});}catch{}console.error('Ciclo comercial indisponível; consulte o painel.');}
+   await api('POST','/api/agent/sales/heartbeat',{status:result.error?'erro':result.paused?'pausado':'ativo',error:result.error||''});console.log('Ciclo comercial:',result.error?'erro: '+result.error:result.paused?'pausado':'concluído');
+  }catch(e){try{await api('POST','/api/agent/sales/heartbeat',{status:'erro',error:String(e.message).slice(0,500)});}catch{}console.error('Ciclo comercial indisponível:',e.message);}
  };
  do{await cycle();if(process.argv.includes('--once'))break;await new Promise(r=>setTimeout(r,Number(process.env.SALES_POLL_MS||5000)));}while(true);
 }
