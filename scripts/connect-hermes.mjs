@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execSync, execFileSync, spawn } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync, openSync, chmodSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, openSync, chmodSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { salesHermesProfile, inspectHermes } from './hermes-sales.mjs';
