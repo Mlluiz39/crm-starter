@@ -1,0 +1,17 @@
+{
+  "name": "mlluiz-crm-base",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Base local do CRM MLLUiz DevTech para integração com Hermes",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2"
+  }
+}

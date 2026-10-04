@@ -1,0 +1,4 @@
+#!/bin/zsh
+set -e
+cd "$(dirname "$0")"
+exec node --input-type=module -e 'import {readFileSync} from "node:fs";import {spawn} from "node:child_process";async function sync(){while(true){try{const k=JSON.parse(readFileSync("data/credentials.json","utf8"));const r=await fetch((process.env.CRM_URL||"http://127.0.0.1:3080")+"/api/sales/settings",{headers:{Authorization:"Bearer "+k.admin}});if(!r.ok)throw Error("CRM indisponível");const c=await r.json();await new Promise(resolve=>{const p=spawn(c.wacliBinary,["--store",c.wacliStore,"sync","--follow"],{shell:false,stdio:"inherit"});p.once("error",err=>{console.error("Erro no wacli:",err);resolve();});p.once("exit",code=>{console.log("wacli desconectado (código",code,"), reconectando em 2s...");resolve();});});}catch(e){console.error(e.message);}await new Promise(r=>setTimeout(r,2000));}}sync();'
