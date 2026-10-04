@@ -3,6 +3,7 @@ import {createSalesApi} from './scripts/sales-api.mjs';
 import {createWacliClient} from './scripts/wacli-client.mjs';
 import {createSalesEmailClient} from './scripts/sales-email.mjs';
 import {salesHermesProfile,inspectHermes} from './scripts/hermes-sales.mjs';
+import {connectHermes} from './scripts/connect-hermes.mjs';
 import { estimateCost } from './scripts/apify-search.mjs';
 import { testAisaConnection } from './scripts/aisa-search.mjs';
 import { createSupabaseStore } from './scripts/db-supabase.mjs';
@@ -157,8 +158,8 @@ function prospectingStats() {
 }
 // Última vez que o worker tocou a fila (deduzido da auditoria, não presumido).
 function workerStatus() {
-  const last = all('audit').find(a => a.action.startsWith('pesquisa.'));
-  return { connected: !!last, lastRunAt: last ? last.at : null, lastAction: last ? last.action : null };
+  const last = all('audit').find(a => a.action.startsWith('pesquisa.') || a.action === 'integracao.hermes.conectada');
+  return { connected: !!last, lastRunAt: last ? last.at : null, lastAction: last ? last.action : null, url: process.env.HERMES_URL || 'http://127.0.0.1:8642' };
 }
 function apifyStatus() { return integrationStatus('apify'); }
 function apiToken(service, v) {
@@ -515,7 +516,34 @@ async function dispatch(method, p, b, role) {
     return {...salvo, enviadosHoje:enviadosHoje(), restante:Math.max(0,Number(salvo.dailyLimit)-enviadosHoje())};
   }
   if(method==='GET' && p==='/api/outbox') { admin(role); return all('outbox').slice(0,200); }
-  // Integrações com chave: apify, aisa, openrouter (Jev), resend (e-mail).
+  // Integrações com chave: apify, aisa, openrouter (Jev), resend (e-mail) e hermes.
+  if(method==='POST' && p==='/api/integrations/hermes/connect') {
+    admin(role);
+    try {
+      const res = await connectHermes();
+      audit(role, 'integracao.hermes.conectada', 'hermes');
+      return { ok: true, connected: true, ...res, message: 'Hermes conectado com sucesso.' };
+    } catch(e) {
+      audit(role, 'integracao.hermes.falhou', 'hermes');
+      fail(500, e.message || 'Falha ao conectar com o Hermes.');
+    }
+  }
+  if(method==='GET' && p==='/api/integrations/hermes') {
+    admin(role);
+    return workerStatus();
+  }
+  if(method==='POST' && p==='/api/integrations/hermes/test') {
+    admin(role);
+    try {
+      const profileData = salesHermesProfile();
+      const res = await inspectHermes({ url: process.env.HERMES_URL || 'http://127.0.0.1:8642', key: profileData.key, profile: profileData.profile });
+      audit(role, 'integracao.hermes.testada', 'hermes');
+      return { ok: true, detail: 'Hermes ativo e conectado com segurança.' };
+    } catch(e) {
+      audit(role, 'integracao.hermes.teste_falhou', 'hermes');
+      return { ok: false, detail: e.message || 'Hermes indisponível.' };
+    }
+  }
   m=p.match(/^\/api\/integrations\/([a-z]+)$/);
   if(m && INTEGRATIONS[m[1]]) {
     admin(role);

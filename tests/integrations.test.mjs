@@ -91,3 +91,15 @@ test('remover apaga só a variável daquele serviço',async()=>{
     assert.ok(raw.includes(envKey+'='),`${envKey} preservada`);
   }
 });
+
+test('Hermes connect endpoint é admin-only e atualiza status de conexão',async()=>{
+  assert.equal((await req('/integrations/hermes/connect','POST',{},agent)).status,403);
+  const r=await req('/integrations/hermes/connect','POST',{});
+  assert.equal(r.status,200);
+  assert.equal(r.data.ok,true);
+  assert.equal(r.data.connected,true);
+  const s=await req('/state');
+  assert.equal(s.data.integrations.hermes.connected,true);
+  assert.equal(typeof s.data.integrations.hermes.lastRunAt,'string');
+});
+
