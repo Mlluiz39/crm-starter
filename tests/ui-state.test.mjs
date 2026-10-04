@@ -48,3 +48,16 @@ test('painel permite assumir IA e mostra decisões Jev sem liberar fechamento',(
  const html=render('conversations',{leads:[{id:'l',name:'Contato'}],sales:{settings:{enabled:true},conversations:[{id:'c',leadId:'l',channel:'email',status:'ativa',version:1}],messages:[],decisions:[{conversationId:'c',decision:{action:'qualificar',confidence:.8,intent:'interesse'}}]}});
  assert.match(html,/Pausar IA e assumir/);assert.match(html,/qualificar/);assert.match(html,/80%/);assert.doesNotMatch(html,/id="inbox-compose"/);
 });
+
+test('card do Hermes na aba integrações reflete status e ação no terminal',()=>{
+ const htmlDesc=render('integrations',{integrations:{hermes:{connected:false}}});
+ assert.match(htmlDesc,/Hermes Agent/);
+ assert.match(htmlDesc,/Aguardando conexão/);
+ assert.match(htmlDesc,/Clique para conectar automaticamente no terminal/);
+
+ const htmlAtivo=render('integrations',{integrations:{hermes:{connected:true,lastRunAt:'2026-10-04T00:00:00.000Z'}}});
+ assert.match(htmlAtivo,/Hermes Agent/);
+ assert.match(htmlAtivo,/Ativo/);
+ assert.match(htmlAtivo,/Clique para verificar ou reconectar no terminal/);
+});
+
