@@ -156,10 +156,22 @@ function prospectingStats() {
     cost: Number(jobs.reduce((s, j) => s + (Number(j.actualCost) || 0), 0).toFixed(4)),
   };
 }
-// Última vez que o worker tocou a fila (deduzido da auditoria, não presumido).
-function workerStatus() {
+// Status em tempo real do Hermes (inspeciona a API local diretamente; não presume por histórico).
+async function workerStatus() {
   const last = all('audit').find(a => a.action.startsWith('pesquisa.') || a.action === 'integracao.hermes.conectada');
-  return { connected: !!last, lastRunAt: last ? last.at : null, lastAction: last ? last.action : null, url: process.env.HERMES_URL || 'http://127.0.0.1:8642' };
+  let liveConnected = false;
+  try {
+    const profileData = salesHermesProfile();
+    const res = await inspectHermes({
+      url: process.env.HERMES_URL || 'http://127.0.0.1:8642',
+      key: profileData.key,
+      profile: profileData.profile
+    });
+    liveConnected = !!res?.connected;
+  } catch {
+    liveConnected = false;
+  }
+  return { connected: liveConnected, lastRunAt: last ? last.at : null, lastAction: last ? last.action : null, url: process.env.HERMES_URL || 'http://127.0.0.1:8642' };
 }
 function apifyStatus() { return integrationStatus('apify'); }
 function apiToken(service, v) {
@@ -282,7 +294,7 @@ async function dispatch(method, p, b, role) {
   if(method==='GET' && p==='/api/session') return {role};
   if(method==='GET' && p==='/api/state') {
     admin(role); return {sales:salesApi.state(),leads:all('leads'),campaigns:all('campaigns'),jobs:all('jobs').map(({leaseToken,...j})=>j),types:all('types'),audit:all('audit').slice(0,100),decisions:all('decisions'),integrations:{
-      hermes:workerStatus(),
+      hermes:await workerStatus(),
       apify:integrationStatus('apify'),
       aisa:integrationStatus('aisa'),
       jev:integrationStatus('jev'),
@@ -530,7 +542,7 @@ async function dispatch(method, p, b, role) {
   }
   if(method==='GET' && p==='/api/integrations/hermes') {
     admin(role);
-    return workerStatus();
+    return await workerStatus();
   }
   if(method==='POST' && p==='/api/integrations/hermes/test') {
     admin(role);

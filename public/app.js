@@ -192,9 +192,9 @@ const jevCard=card('jev','spark','Jev (TypeSafe)',ig.jev&&ig.jev.configured,'Con
   'Modelo de decisão pela API nativa da TypeSafe. Responde perguntas tipadas com probabilidade — o worker usa para qualificar leads.',chave('jev'));
 const emailCard=card('email','mail','Envio de e-mail',ig.email&&ig.email.configured,'Chave configurada','Chave não configurada',
   'Resend. Envio real após configuração e aprovação. O modo de teste envia somente ao endereço de teste.',chave('email'));
-const hermesCard=card('hermes','spark','Hermes Agent',hm.connected,'Ativo','Aguardando conexão',
+const hermesCard=card('hermes','spark','Hermes Agent',hm.connected,'Ativo','Desconectado',
   'Worker e API local: prospecção autônoma, importação de leads e vendas com IA.',
-  hm.connected?(hm.lastRunAt?`<p class="caption">Última atividade: ${date(hm.lastRunAt)}</p>`:'<p class="caption">API local conectada na porta 8642</p>'):'<p class="caption">Gateway desligado ou com erro</p>');
+  hm.connected?`<p class="caption">API local conectada na porta 8642${hm.lastRunAt?' · última atividade '+date(hm.lastRunAt):''}</p>`:'<p class="caption error-text">Gateway desligado — clique para conectar</p>');
 return heading('Integrações','O que está conectado de verdade neste ambiente.')
 +`<div class="integration-grid">${apifyCard}${aisaCard}${jevCard}${emailCard}${hermesCard}</div>`
 +`<p class="info">Cada chave é gravada pelo servidor no arquivo de ambiente do Hermes e nunca aparece no navegador. Use <strong>Testar conexão</strong> para validar de verdade. O envio de e-mail exige configuração e aprovação; confira o modo de teste ou produção antes de enviar.</p>`;
