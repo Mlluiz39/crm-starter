@@ -52,7 +52,7 @@ test('painel permite assumir IA e mostra decisões Jev sem liberar fechamento',(
 test('card do Hermes na aba integrações reflete status e ação no terminal',()=>{
  const htmlDesc=render('integrations',{integrations:{hermes:{connected:false}}});
  assert.match(htmlDesc,/Hermes Agent/);
- assert.match(htmlDesc,/Aguardando conexão/);
+ assert.match(htmlDesc,/Desconectado/);
  assert.match(htmlDesc,/Clique para conectar automaticamente no terminal/);
 
  const htmlAtivo=render('integrations',{integrations:{hermes:{connected:true,lastRunAt:'2026-10-04T00:00:00.000Z'}}});
