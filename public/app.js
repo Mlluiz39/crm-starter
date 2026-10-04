@@ -233,7 +233,7 @@ function integrationModal(id){
         </div>
       </div>`);
     const statusBox = $('#hermes-connect-status');
-    const bindClose = () => $('#modal').querySelectorAll('[data-action="close"]').forEach(b => b.onclick = () => $('#modal').close());
+    const bindClose = () => $('#modal')?.querySelectorAll?.('[data-action="close"]')?.forEach?.(b => b.onclick = () => $('#modal').close?.());
     bindClose();
     (async () => {
       try {
@@ -300,7 +300,7 @@ function integrationModal(id){
     +`<div class="form-actions" style="justify-content:flex-start">${btn('Testar conexão','test-integration','','',`data-id="${id}"`)}</div>`
     +`<p class="caption" id="int-result"></p><p class="caption">${INFO[2]}</p>`);
   // O modal vive fora de #app: bind() não alcança seus [data-action].
-  $('#modal').querySelectorAll('[data-action="close"]').forEach(b=>b.onclick=()=>$('#modal').close());
+  $('#modal')?.querySelectorAll?.('[data-action="close"]')?.forEach?.(b=>b.onclick=()=>$('#modal').close?.());
   $('#int-form').onsubmit=async e=>{
     e.preventDefault();
     const sub=e.target.querySelector('button.primary'),v=(new FormData(e.target).get('token')||'').trim();
@@ -317,12 +317,21 @@ function integrationModal(id){
 function modal(html){
   const m=$('#modal');
   m.innerHTML=btn('','close','close','quiet modal-close','aria-label="Fechar"')+html;
-  if(!m.open) m.showModal();
-  m.querySelectorAll('[data-action="close"]').forEach(b=>b.onclick=()=>m.close());
+  if(m.showModal && !m.open) m.showModal();
+  if(typeof m.querySelectorAll==='function'){
+    m.querySelectorAll('[data-action="close"]').forEach(b=>b.onclick=()=>m.close?.());
+  } else if(typeof m.querySelector==='function'){
+    const b=m.querySelector('[data-action="close"]');
+    if(b) b.onclick=()=>m.close?.();
+  }
   m.onclick=(e)=>{
-    const r=m.getBoundingClientRect();
-    if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom){
-      m.close();
+    if(typeof m.getBoundingClientRect==='function'){
+      const r=m.getBoundingClientRect();
+      if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom){
+        m.close?.();
+      }
+    } else if(e.target===m){
+      m.close?.();
     }
   };
 }
