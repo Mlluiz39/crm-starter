@@ -93,7 +93,7 @@ function scheduleProspectingRefresh(){
 }
 
 function dashboard(){const cut=period==='all'?0:Date.now()-Number(period)*86400000;const ls=data.leads.filter(l=>Date.parse(l.createdAt)>=cut),won=ls.filter(l=>l.stage==='ganho').length;return heading('Dashboard','Uma visão clara das suas oportunidades.',btn('Exportar leads','export','download'))+`<div class="tabs">${[['1','24 horas'],['7','7 dias'],['30','30 dias'],['all','Tudo']].map(([v,l])=>`<button data-period="${v}" class="${period===v?'active':''}">${l}</button>`).join('')}</div><div class="stats">${[['users','blue',ls.length,'Leads cadastrados'],['check','green',won,'Negócios ganhos'],['target','',ls.filter(l=>l.stage==='qualificado').length,'Leads qualificados'],['mail','gold',data.campaigns.filter(c=>c.status==='aguardando_aprovacao').length,'Aprovações pendentes']].map(([i,c,n,t])=>`<div class="card stat"><div class="icon-box ${c}">${icon(i)}</div><strong>${n}</strong><label>${t}</label><div class="shape"></div></div>`).join('')}</div><p class="caption">Indicadores de leads no período selecionado. Aprovações mostram o total pendente atual.</p><div class="split"><section class="card"><div class="row between"><h2>Seu funil comercial</h2>${btn('Ver pipeline','pipeline','','quiet')}</div>${['novo','qualificado','contatado','reuniao','proposta','ganho'].map(s=>`<div class="metric-row"><div class="row between"><span class="muted">${names[s]}</span><strong>${ls.filter(l=>l.stage===s).length}</strong></div><div class="bar"><progress max="${Math.max(ls.length,1)}" value="${ls.filter(l=>l.stage===s).length}" aria-label="${names[s]}"></progress></div></div>`).join('')}</section><section class="card"><h2>Últimas atividades</h2>${data.audit.length?data.audit.slice(0,6).map(a=>`<div class="activity"><span class="dot"></span><div>${esc(activityName(a.action))}<small>${a.actor==='admin'?'Administrador':'Hermes'} · ${date(a.at)}</small></div></div>`).join(''):empty('Tudo pronto para começar','Adicione seu primeiro lead ou prepare uma pesquisa.',btn('Adicionar lead','new-lead','plus','primary'),'users')}</section></div>`;}
-function activityName(s){return ({'lead.criado':'Lead cadastrado','lead.atualizado':'Lead atualizado','tipo.criado':'Tipo de lead criado','tipo.atualizado':'Tipo atualizado','campanha.criada':'Campanha criada','campanha.editada':'Campanha editada','campanha.submit':'Campanha enviada para revisão','campanha.approve':'Campanha aprovada','campanha.reject':'Campanha devolvida para revisão','pesquisa.criada':'Pesquisa adicionada à fila','pesquisa.assumida':'Hermes assumiu uma pesquisa','pesquisa.concluida':'Pesquisa concluída','pesquisa.falhou':'Pesquisa interrompida','pesquisa.aguardando_backup':'AISA falhou: aguardando sua decisão','pesquisa.apify_ativada':'Apify ativada como reserva','decisao.registrada':'Avaliação do worker registrada','integracao.apify.atualizada':'Chave da Apify atualizada','integracao.apify.atualizada':'Chave da Apify atualizada','integracao.apify.removida':'Chave da Apify removida','integracao.aisa.atualizada':'Chave da AISA atualizada','integracao.aisa.removida':'Chave da AISA removida','integracao.openrouter.atualizada':'Chave do Jev/TypeSafe atualizada','integracao.openrouter.removida':'Chave do Jev/TypeSafe removida','integracao.resend.atualizada':'Chave do Resend atualizada','integracao.resend.removida':'Chave do Resend removida','integracao.apify.testada':'Apify: conexão testada','integracao.aisa.testada':'AISA: conexão testada','integracao.openrouter.testada':'Jev: conexão testada','integracao.resend.testada':'Resend: conexão testada','integracao.apify.teste_falhou':'Apify: teste falhou','integracao.aisa.teste_falhou':'AISA: teste falhou','integracao.openrouter.teste_falhou':'Jev: teste falhou','integracao.resend.teste_falhou':'Resend: teste falhou','pesquisa.limpeza':'Pesquisas antigas removidas','pesquisa.removida':'Pesquisa removida','campanha.enviada':'Campanha enviada','campanha.teste_enviado':'E-mail de teste enviado','campanha.envio_parcial':'Envio parcial (com falhas)','email.configurado':'Configurações de envio atualizadas'})[s]||s;}
+function activityName(s){return ({'lead.criado':'Lead cadastrado','lead.atualizado':'Lead atualizado','tipo.criado':'Tipo de lead criado','tipo.atualizado':'Tipo atualizado','campanha.criada':'Campanha criada','campanha.editada':'Campanha editada','campanha.submit':'Campanha enviada para revisão','campanha.approve':'Campanha aprovada','campanha.reject':'Campanha devolvida para revisão','pesquisa.criada':'Pesquisa adicionada à fila','pesquisa.assumida':'Hermes assumiu uma pesquisa','pesquisa.concluida':'Pesquisa concluída','pesquisa.falhou':'Pesquisa interrompida','pesquisa.aguardando_backup':'AISA falhou: aguardando sua decisão','pesquisa.apify_ativada':'Apify ativada como reserva','decisao.registrada':'Avaliação do worker registrada','integracao.hermes.conectada':'Hermes conectado no terminal','integracao.hermes.testada':'Hermes: conexão testada','integracao.hermes.falhou':'Hermes: falha na conexão','integracao.hermes.teste_falhou':'Hermes: teste falhou','integracao.apify.atualizada':'Chave da Apify atualizada','integracao.apify.removida':'Chave da Apify removida','integracao.aisa.atualizada':'Chave da AISA atualizada','integracao.aisa.removida':'Chave da AISA removida','integracao.openrouter.atualizada':'Chave do Jev/TypeSafe atualizada','integracao.openrouter.removida':'Chave do Jev/TypeSafe removida','integracao.resend.atualizada':'Chave do Resend atualizada','integracao.resend.removida':'Chave do Resend removida','integracao.apify.testada':'Apify: conexão testada','integracao.aisa.testada':'AISA: conexão testada','integracao.openrouter.testada':'Jev: conexão testada','integracao.resend.testada':'Resend: conexão testada','integracao.apify.teste_falhou':'Apify: teste falhou','integracao.aisa.teste_falhou':'AISA: teste falhou','integracao.openrouter.teste_falhou':'Jev: teste falhou','integracao.resend.teste_falhou':'Resend: teste falhou','pesquisa.limpeza':'Pesquisas antigas removidas','pesquisa.removida':'Pesquisa removida','campanha.enviada':'Campanha enviada','campanha.teste_enviado':'E-mail de teste enviado','campanha.envio_parcial':'Envio parcial (com falhas)','email.configurado':'Configurações de envio atualizadas'})[s]||s;}
 function listLeads(client=false){return data.leads.filter(l=>(!client||l.stage==='ganho')&&[l.name,l.email,l.city,l.segment,l.contact].join(' ').toLowerCase().includes(filter.toLowerCase()));}
 function leadTable(ls){return ls.length?`<div class="table-wrap"><table><thead><tr><th>Empresa / contato</th><th>Segmento</th><th>Localização</th><th>Etapa</th><th>Tipo</th><th></th></tr></thead><tbody>${ls.map(l=>`<tr><td><strong>${esc(l.name)}</strong><small>${esc(l.email||l.phone||'Sem contato cadastrado')}</small></td><td>${esc(l.segment||'—')}</td><td>${esc(l.city||'—')}</td><td>${l.blocked?'<span class="badge red">Não contatar</span>':badge(l.stage)}</td><td>${esc(data.types.find(t=>t.id===l.typeId)?.name||'—')}</td><td>${btn('Detalhes','lead-detail','','',`data-id="${l.id}"`)}</td></tr>`).join('')}</tbody></table></div>`:`<section class="card">${empty('Nenhum lead encontrado',filter?'Tente outro termo de busca.':'Cadastre seus contatos ou configure uma pesquisa com o Hermes.',btn('Adicionar lead','new-lead','plus','primary'),'users')}</section>`;}
 function leads(){return heading('Leads','Contatos, contexto e próximos passos em um só lugar.',btn('Novo lead','new-lead','plus','primary'))+`<div class="toolbar"><span class="badge">${listLeads().length} registros</span><span class="spacer"></span>${btn('Atualizar','reload','refresh')}${btn('Exportar','export','download')}</div>`+leadTable(listLeads());}
@@ -180,7 +180,8 @@ const hm=ig.hermes||{connected:false,lastRunAt:null};
 // Cada card é um botão: abre o detalhe (e a configuração da chave, quando existe).
 const card=(id,ico,nome,ok,okTxt,pendTxt,desc,extra)=>{
   const b=ok?`<span class="badge green">${okTxt}</span>`:`<span class="badge gold">${pendTxt}</span>`;
-  return `<button class="card int-card" data-action="open-integration" data-id="${id}"><div class="row between"><div class="row"><div class="icon-box ${ok?'green':'gold'}">${icon(ico)}</div><h2>${nome}</h2></div>${b}</div><p>${desc}</p>${extra||''}<span class="caption">Clique para configurar a chave</span></button>`;
+  const tip=id==='hermes'?(ok?'Clique para verificar ou reconectar no terminal':'Clique para conectar automaticamente no terminal'):'Clique para configurar a chave';
+  return `<button class="card int-card" data-action="open-integration" data-id="${id}"><div class="row between"><div class="row"><div class="icon-box ${ok?'green':'gold'}">${icon(ico)}</div><h2>${nome}</h2></div>${b}</div><p>${desc}</p>${extra||''}<span class="caption">${tip}</span></button>`;
 };
 const chave=id=>{const s=ig[id]||{};return s.configured?`<p class="caption">Chave: <strong class="mono">${esc(s.masked)}</strong></p>`:'';};
 const apifyCard=card('apify','key','Apify',ig.apify&&ig.apify.configured,'Conectada','Chave não configurada',
@@ -191,9 +192,9 @@ const jevCard=card('jev','spark','Jev (TypeSafe)',ig.jev&&ig.jev.configured,'Con
   'Modelo de decisão pela API nativa da TypeSafe. Responde perguntas tipadas com probabilidade — o worker usa para qualificar leads.',chave('jev'));
 const emailCard=card('email','mail','Envio de e-mail',ig.email&&ig.email.configured,'Chave configurada','Chave não configurada',
   'Resend. Envio real após configuração e aprovação. O modo de teste envia somente ao endereço de teste.',chave('email'));
-const hermesCard=card('hermes','spark','Hermes Agent',hm.connected,'Ativo','Aguardando 1ª execução',
-  'Worker de prospecção: consome a fila, importa leads reais e relata decisões.',
-  hm.connected?`<p class="caption">Última atividade: ${date(hm.lastRunAt)}</p>`:'');
+const hermesCard=card('hermes','spark','Hermes Agent',hm.connected,'Ativo','Aguardando conexão',
+  'Worker e API local: prospecção autônoma, importação de leads e vendas com IA.',
+  hm.connected?(hm.lastRunAt?`<p class="caption">Última atividade: ${date(hm.lastRunAt)}</p>`:'<p class="caption">API local conectada na porta 8642</p>'):'<p class="caption">Gateway desligado ou com erro</p>');
 return heading('Integrações','O que está conectado de verdade neste ambiente.')
 +`<div class="integration-grid">${apifyCard}${aisaCard}${jevCard}${emailCard}${hermesCard}</div>`
 +`<p class="info">Cada chave é gravada pelo servidor no arquivo de ambiente do Hermes e nunca aparece no navegador. Use <strong>Testar conexão</strong> para validar de verdade. O envio de e-mail exige configuração e aprovação; confira o modo de teste ou produção antes de enviar.</p>`;
@@ -223,7 +224,55 @@ function emailSettingsModal(){
 function integrationModal(id){
   const ig=data.integrations||{}, hm=ig.hermes||{};
   if(id==='hermes'){
-    modal(`<h2>Hermes Agent</h2><p>O worker já está conectado por um token exclusivo que o próprio CRM gera e guarda em data/credentials.json. Não há chave para colar aqui — por segurança, esse token nunca aparece na interface.</p><p class="info">Para o worker executar um ciclo: bash worker-cycle.sh</p>`);
+    modal(`<h2>Hermes Agent</h2>
+      <div id="hermes-connect-status">
+        <p class="caption">Executando script de conexão no terminal (verificando instalação, perfil e gateway)...</p>
+        <div class="typing-dots" style="margin: 16px 0;"><span></span><span></span><span></span></div>
+      </div>`);
+    const statusBox = $('#hermes-connect-status');
+    (async () => {
+      try {
+        toast('Conectando ao Hermes via terminal...');
+        const r = await api('/integrations/hermes/connect', 'POST', {});
+        await load();
+        if(statusBox){
+          statusBox.innerHTML = `
+            <div class="row" style="margin-bottom: 12px;">
+              <div class="icon-box green">${icon('check')}</div>
+              <div>
+                <strong>Hermes conectado com sucesso!</strong>
+                <p class="caption">O script executou e validou a conexão no terminal. O gateway está respondendo e as ferramentas MCP estão configuradas com segurança.</p>
+              </div>
+            </div>
+            <p class="caption">URL do Gateway: <strong class="mono">${esc(r.url || 'http://127.0.0.1:8642')}</strong></p>
+            <div class="form-actions" style="margin-top: 16px; justify-content: flex-start;">
+              ${btn('Reconectar / Testar novamente', 'hermes-reconnect', 'spark', 'primary')}
+            </div>
+          `;
+          const rec = statusBox.querySelector('[data-action="hermes-reconnect"]');
+          if(rec) rec.onclick = () => integrationModal('hermes');
+        }
+        toast('Hermes conectado com sucesso!');
+      } catch(err) {
+        if(statusBox){
+          statusBox.innerHTML = `
+            <div class="row" style="margin-bottom: 12px;">
+              <div class="icon-box red">${icon('alert')}</div>
+              <div>
+                <strong>Falha ao conectar Hermes</strong>
+                <p class="error-text">${esc(err.message)}</p>
+              </div>
+            </div>
+            <div class="form-actions" style="margin-top: 16px; justify-content: flex-start;">
+              ${btn('Tentar novamente', 'hermes-reconnect', 'spark', 'primary')}
+            </div>
+          `;
+          const rec = statusBox.querySelector('[data-action="hermes-reconnect"]');
+          if(rec) rec.onclick = () => integrationModal('hermes');
+        }
+        toast('Erro ao conectar Hermes: ' + err.message);
+      }
+    })();
     return;
   }
   const INFO={
