@@ -10,4 +10,17 @@
 .realtime-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#258764;font-weight:550;background:#e9f8f1;padding:4px 10px;border-radius:20px}
 .realtime-dot{width:7px;height:7px;border-radius:50%;background:#258764;animation:pulse 1.8s infinite}
 @keyframes pulse{0%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.3)}100%{opacity:1;transform:scale(1)}}
+.conversation-bubble.typing{align-self:flex-end;background:linear-gradient(135deg,#f4efff 0%,#ebe2fc 100%);border:1px solid #d5c3f3;box-shadow:0 4px 14px rgba(109,40,217,.08);min-width:140px;animation:fadeIn .25s ease-out}
+.typing-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.typing-label{font-size:11px;font-weight:500;color:var(--purple);text-transform:lowercase}
+.typing-dots{display:flex;align-items:center;gap:5px;padding:6px 0 2px}
+.typing-dots span{width:7px;height:7px;background:var(--purple);border-radius:50%;display:inline-block;opacity:.4;animation:typingBounce 1.4s infinite ease-in-out both}
+.typing-dots span:nth-child(1){animation-delay:-.32s}
+.typing-dots span:nth-child(2){animation-delay:-.16s}
+.typing-dots span:nth-child(3){animation-delay:0s}
+@keyframes typingBounce{0%,80%,100%{transform:scale(.7);opacity:.3}40%{transform:scale(1.15);opacity:1}}
+.typing-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--purple);background:#ede5fd;border-radius:12px;padding:2px 8px;margin-top:2px}
+.typing-dot-small{width:6px;height:6px;background:var(--purple);border-radius:50%;animation:pulseDot 1s infinite alternate}
+@keyframes pulseDot{0%{opacity:.3;transform:scale(.8)}100%{opacity:1;transform:scale(1.2)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 

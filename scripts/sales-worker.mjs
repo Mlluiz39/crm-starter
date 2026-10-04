@@ -18,6 +18,8 @@ export async function runSalesCycle({api,decide=decideSale,draft,readWhatsapp,re
   await progress({service,reserveUsd:service==='hermes'&&context.settings.hermesIncluded?0:context.settings[service+'MaxCostUsd']});reserved=true;
   const v=await fn();await progress({settle:true,costUsd:v.costUsd??null,providerId:v.providerId,costEstimateUsd:v.costEstimateUsd,inputTokens:v.inputTokens,pricingModel:v.pricingModel,...(decision?{decision:v}:{})});reserved=false;return v;
  }
+ const isWhatsapp=context.conversation?.channel==='whatsapp';
+ const typingPing=isWhatsapp?setInterval(()=>{api('POST',`/api/agent/sales/conversations/${context.conversation.id}/presence`,{typing:true}).catch(()=>{});},6000):null;
  try{
   const decision=await call('jev',()=>decide(context),true);
   let kind=decision.action;
@@ -33,6 +35,9 @@ export async function runSalesCycle({api,decide=decideSale,draft,readWhatsapp,re
   if(reserved)try{await progress({settle:true,costUsd:e.costUsd??null,providerId:e.providerId,costEstimateUsd:e.costEstimateUsd,inputTokens:e.inputTokens,pricingModel:e.pricingModel});}catch{}
   try{await api('POST',`/api/agent/sales/tasks/${task.id}/fail`,{leaseToken:task.leaseToken,error:String(e.message).slice(0,1000)});}catch{}
   return {error:e.message};
+ }finally{
+  if(typingPing)clearInterval(typingPing);
+  if(isWhatsapp)try{await api('POST',`/api/agent/sales/conversations/${context.conversation.id}/presence`,{typing:false});}catch{}
  }
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

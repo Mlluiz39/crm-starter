@@ -109,6 +109,7 @@ export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail
      const c=get('salesConversations',t.conversationId);if(!c||c.version!==t.conversationVersion){t.status='cancelada';put('salesTasks',t);continue;}
      try{active(c);}catch{continue;}
      t.status='executando';t.leaseToken=randomUUID();t.leaseUntil=new Date(Date.now()+10*60_000).toISOString();put('salesTasks',t);
+     if(presenceWhatsapp&&c.channel==='whatsapp'){try{presenceWhatsapp({recipient:c.recipient,typing:true,settings:cfg});}catch{}}
      return {task:t,context:{lead:getLead(c.leadId),conversation:c,history:all('salesMessages').filter(m=>m.conversationId===c.id),settings:cfg,phrases:get('settings','salesPhrases')||null,task:t}};
     }return {task:null};
    });
@@ -143,11 +144,11 @@ export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail
     }
     t.leaseUntil=new Date(Date.now()+10*60_000).toISOString();put('salesTasks',t);return {ok:true};
    }
-   if(taskRoute[2]==='fail'){t.status='falhou';t.error=text(b.error,'erro',1000,true);put('salesTasks',t);if(c.version===t.conversationVersion){c.status='pausada';c.error=t.error;put('salesConversations',c);}return {ok:true};}
+   if(taskRoute[2]==='fail'){t.status='falhou';t.error=text(b.error,'erro',1000,true);put('salesTasks',t);if(c.version===t.conversationVersion){c.status='pausada';c.error=t.error;put('salesConversations',c);}if(presenceWhatsapp&&c.channel==='whatsapp'){try{presenceWhatsapp({recipient:c.recipient,typing:false,settings:cfg});}catch{}}return {ok:true};}
    active(c);if(c.version!==t.conversationVersion)fail(409,'Conversa mudou durante a redação.');
    if(!['qualificar','responder','acompanhar','propor','fechar','pausar','humano'].includes(b.kind))fail(400,'Ação inválida.');
    if(t.reason==='acompanhamento'&&['qualificar','responder','acompanhar'].includes(b.kind))b={...b,kind:'acompanhar',templateId:'acompanhamento',terms:{}};
-   if(['pausar','humano'].includes(b.kind)){t.status='concluida';c.status='pausada';c.error=b.kind==='humano'?'Hermes solicitou intervenção humana.':text(b.body||'Atendimento pausado.','motivo',1000);put('salesTasks',t);put('salesConversations',c);return {status:'pausada'};}
+   if(['pausar','humano'].includes(b.kind)){t.status='concluida';c.status='pausada';c.error=b.kind==='humano'?'Hermes solicitou intervenção humana.':text(b.body||'Atendimento pausado.','motivo',1000);put('salesTasks',t);put('salesConversations',c);if(presenceWhatsapp&&c.channel==='whatsapp'){try{presenceWhatsapp({recipient:c.recipient,typing:false,settings:cfg});}catch{}}return {status:'pausada'};}
    const terms=b.terms??{};if(typeof terms!=='object'||!terms||Array.isArray(terms)||JSON.stringify(terms).length>5000)fail(400,'Termos inválidos.');
    const sentTemplates=all('salesMessages').filter(m=>m.conversationId===c.id&&m.direction==='outbound'&&m.templateId).map(m=>m.templateId);
    if(b.templateId&&sentTemplates.includes(b.templateId)&&['qualificar','responder'].includes(b.kind)){
@@ -157,8 +158,10 @@ export function createSalesApi({db,getLead,putLead,audit,emailSettings,sendEmail
    const approval=requiresApproval({...b,terms});
    const latest=all('salesMessages').filter(m=>m.conversationId===c.id&&m.direction==='inbound').at(-1);
    const m=put('salesMessages',{id:randomUUID(),conversationId:c.id,channel:c.channel,recipient:c.recipient,direction:'outbound',kind:b.kind,templateId:approval?null:b.templateId,body:approval?text(b.body,'mensagem',8000,true):templateMessage(b.templateId,getLead(c.leadId),cfg),subject:approval?text(b.subject||'Proposta comercial','assunto',200,true):'Conversa com '+cfg.company,terms:approval?terms:{},conversationVersion:c.version,version:1,status:approval?'aguardando_aprovacao':'pendente',createdAt:now(),taskId:t.id,inReplyTo:latest?.threadId||null});
-   m.isFollowup=t.reason==='acompanhamento';put('salesMessages',m);t.status='concluida';put('salesTasks',t);c.nextActionAt=null;if(approval)c.status='aguardando_aprovacao';put('salesConversations',c);audit(role,'vendas.rascunho',m.id);return m;
+   m.isFollowup=t.reason==='acompanhamento';put('salesMessages',m);t.status='concluida';put('salesTasks',t);c.nextActionAt=null;if(approval)c.status='aguardando_aprovacao';put('salesConversations',c);if(presenceWhatsapp&&c.channel==='whatsapp'){try{presenceWhatsapp({recipient:c.recipient,typing:false,settings:cfg});}catch{}}audit(role,'vendas.rascunho',m.id);return m;
   });}
+  const presenceRoute=p.match(/^\/api\/(?:agent\/)?sales\/conversations\/([^/]+)\/presence$/);
+  if(method==='POST'&&presenceRoute){const c=required('salesConversations',presenceRoute[1]);if(c.channel==='whatsapp'&&presenceWhatsapp){await presenceWhatsapp({recipient:c.recipient,typing:b.typing!==false,settings:settings()});}return {ok:true};}
   const approval=p.match(/^\/api\/sales\/messages\/([^/]+)\/(approve|reject|edit|reconcile)$/);
   if(method==='POST'&&approval){admin(role);return transaction(()=>{
    const m=required('salesMessages',approval[1]),c=required('salesConversations',m.conversationId);
